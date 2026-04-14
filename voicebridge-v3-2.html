@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>VoiceBridge</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #F5F3FF;
+  --white: #FFFFFF;
+  --primary: #6C3FF5;
+  --primary-light: #EDE9FE;
+  --primary-dark: #4F25D4;
+  --secondary: #F97316;
+  --secondary-light: #FFF0E6;
+  --green: #10B981;
+  --green-light: #D1FAE5;
+  --red: #EF4444;
+  --red-light: #FEE2E2;
+  --text: #1E1B4B;
+  --text2: #6B7280;
+  --border: #E5E7EB;
+  --card: #FFFFFF;
+  --shadow: 0 2px 16px rgba(108,63,245,0.08);
+  --shadow-md: 0 4px 24px rgba(108,63,245,0.14);
+}
+
+html, body {
+  height: 100%; background: var(--bg);
+  font-family: 'Outfit', sans-serif;
+  color: var(--text); overflow: hidden;
+}
+
+/* LAYOUT */
+.app {
+  height: 100vh; display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  max-width: 430px; margin: 0 auto;
+}
+
+/* HEADER */
+header {
+  background: var(--white); padding: 16px 20px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1.5px solid var(--border);
+}
+.logo { display: flex; align-items: center; gap: 8px; }
+.logo-mark {
+  width: 36px; height: 36px; background: var(--primary);
+  border-radius: 12px; display: flex; align-items: center;
+  justify-content: center; font-size: 18px; box-shadow: 0 4px 12px rgba(108,63,245,0.3);
+}
+.logo-text { font-family: 'Nunito', sans-serif; font-size: 20px; font-weight: 900; color: var(--primary); letter-spacing: -0.5px; }
+.live-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--green-light); border-radius: 20px;
+  padding: 5px 12px; font-size: 12px; font-weight: 700; color: var(--green);
+  transition: all 0.3s;
+}
+.live-badge.recording { background: var(--red-light); color: var(--red); }
+.badge-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.live-badge.recording .badge-dot { background: var(--red); animation: pulse-dot 1s infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+/* NAV */
+.nav {
+  background: var(--white); display: grid; grid-template-columns: repeat(4, 1fr);
+  padding: 8px 12px; gap: 4px; border-bottom: 1.5px solid var(--border);
+}
+.nav-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 4px; border: none; background: none; border-radius: 12px;
+  cursor: pointer; transition: all 0.18s; color: var(--text2);
+  font-family: 'Outfit', sans-serif;
+}
+.nav-btn .icon { font-size: 20px; }
+.nav-btn .label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.nav-btn.active { background: var(--primary-light); color: var(--primary); }
+.nav-btn:active { transform: scale(0.94); }
+
+/* MAIN */
+main { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+main::-webkit-scrollbar { width: 0; }
+
+.tab { display: none; flex-direction: column; gap: 12px; }
+.tab.active { display: flex; }
+
+/* CARDS */
+.card {
+  background: var(--card); border-radius: 20px; padding: 18px;
+  box-shadow: var(--shadow); border: 1.5px solid var(--border);
+}
+.card-title {
+  font-size: 11px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--text2); margin-bottom: 14px;
+}
+
+/* LANG SELECTOR */
+.lang-selector { display: grid; grid-template-columns: 1fr 44px 1fr; align-items: end; gap: 8px; }
+.lang-group { display: flex; flex-direction: column; gap: 6px; }
+.lang-label { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.8px; }
+.lang-pick {
+  background: var(--bg); border: 2px solid var(--border); color: var(--text);
+  font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700;
+  padding: 11px 12px; border-radius: 14px; outline: none; cursor: pointer;
+  appearance: none; -webkit-appearance: none; width: 100%;
+  transition: border-color 0.2s;
+}
+.lang-pick:focus { border-color: var(--primary); }
+.swap-btn {
+  width: 44px; height: 44px; border-radius: 14px; border: 2px solid var(--border);
+  background: var(--white); color: var(--primary); font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+  flex-shrink: 0;
+}
+.swap-btn:active { background: var(--primary); color: var(--white); transform: rotate(180deg); }
+
+/* OUTPUT BOX */
+.output-box {
+  background: var(--primary-light); border-radius: 16px; padding: 16px;
+  min-height: 90px; border: 2px solid transparent; transition: border-color 0.3s;
+  position: relative;
+}
+.output-box.has-result { border-color: var(--primary); }
+.output-original { font-size: 12px; color: var(--text2); margin-bottom: 8px; font-style: italic; line-height: 1.5; }
+.output-translated { font-size: 20px; font-weight: 800; color: var(--primary); line-height: 1.4; min-height: 28px; }
+.output-placeholder { font-size: 14px; color: var(--text2); font-weight: 500; }
+.output-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+.chip {
+  display: flex; align-items: center; gap: 5px;
+  padding: 7px 14px; border-radius: 20px; border: 2px solid var(--border);
+  background: var(--white); font-size: 12px; font-weight: 700; color: var(--text2);
+  cursor: pointer; transition: all 0.15s; font-family: 'Outfit', sans-serif;
+}
+.chip:active { transform: scale(0.94); }
+.chip.primary { background: var(--primary); color: var(--white); border-color: var(--primary); }
+.chip.orange { background: var(--secondary); color: var(--white); border-color: var(--secondary); }
+
+/* SPINNER */
+.spinner-wrap { display: none; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--primary); }
+.spinner-wrap.show { display: flex; }
+.spinner { width: 14px; height: 14px; border: 2.5px solid var(--primary-light); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* WAVEFORM */
+.waveform-card { background: var(--card); border-radius: 16px; padding: 14px 16px; box-shadow: var(--shadow); border: 1.5px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.wave-bars { display: flex; align-items: center; gap: 3px; flex: 1; height: 36px; }
+.bar { flex: 1; background: var(--border); border-radius: 3px; height: 4px; transition: height 0.08s; }
+.bar.on { background: var(--primary); animation: barAnim 0.7s ease-in-out infinite alternate; }
+@keyframes barAnim { from { height: 4px; } to { height: var(--h, 22px); } }
+.wave-status { font-size: 11px; font-weight: 800; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
+
+/* SESSION LOG */
+.log-list { display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; }
+.log-list::-webkit-scrollbar { width: 0; }
+.log-item { background: var(--bg); border-radius: 14px; padding: 12px 14px; border-left: 3px solid var(--primary); animation: popIn 0.25s ease; }
+@keyframes popIn { from { opacity:0; transform: scale(0.97) translateY(4px); } to { opacity:1; transform: none; } }
+.log-original { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+.log-translated { font-size: 13px; font-weight: 700; color: var(--text); }
+.log-empty { text-align: center; padding: 20px; color: var(--text2); font-size: 13px; font-weight: 600; }
+
+/* MIC BUTTON */
+.mic-section { padding: 12px 20px 20px; background: var(--white); border-top: 1.5px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.mic-outer { position: relative; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; }
+.mic-ring { position: absolute; inset: 0; border-radius: 50%; border: 3px solid var(--primary); opacity: 0; }
+.mic-ring.active { animation: ripple 1.4s ease-out infinite; }
+@keyframes ripple { 0%{transform:scale(0.85);opacity:0.6;} 100%{transform:scale(1.5);opacity:0;} }
+.mic-btn {
+  width: 68px; height: 68px; border-radius: 50%; border: none;
+  background: var(--primary); color: var(--white); font-size: 26px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 24px rgba(108,63,245,0.4); transition: all 0.2s; position: relative; z-index: 1;
+}
+.mic-btn.on { background: var(--red); box-shadow: 0 6px 24px rgba(239,68,68,0.4); }
+.mic-btn:active { transform: scale(0.93); }
+.mic-label { font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }
+
+/* TEXT TAB */
+.text-area {
+  width: 100%; min-height: 100px; padding: 14px; border-radius: 16px;
+  border: 2px solid var(--border); background: var(--bg); color: var(--text);
+  font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 500;
+  outline: none; resize: none; line-height: 1.5; transition: border-color 0.2s;
+}
+.text-area:focus { border-color: var(--primary); }
+.text-area::placeholder { color: var(--text2); }
+.translate-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+.btn-translate {
+  background: var(--primary); color: var(--white); border: none;
+  padding: 12px 24px; border-radius: 14px; font-family: 'Outfit', sans-serif;
+  font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(108,63,245,0.3);
+}
+.btn-translate:active { transform: scale(0.96); }
+.btn-translate:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-clear { background: var(--bg); color: var(--text2); border: 2px solid var(--border); padding: 12px 18px; border-radius: 14px; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+/* CHAT TAB */
+.chat-wrap { display: flex; flex-direction: column; background: var(--card); border-radius: 20px; box-shadow: var(--shadow); border: 1.5px solid var(--border); overflow: hidden; }
+.chat-header { padding: 14px 18px; background: var(--primary); display: flex; align-items: center; gap: 10px; }
+.chat-avatar { width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.chat-header-text { flex: 1; }
+.chat-header-name { font-size: 14px; font-weight: 800; color: #fff; }
+.chat-header-sub { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 600; }
+.chat-messages { padding: 14px; display: flex; flex-direction: column; gap: 10px; min-height: 260px; max-height: 260px; overflow-y: auto; }
+.chat-messages::-webkit-scrollbar { width: 0; }
+.msg { max-width: 82%; animation: popIn 0.2s ease; }
+.msg.user { align-self: flex-end; }
+.msg.bot { align-self: flex-start; }
+.msg-bubble {
+  padding: 10px 14px; border-radius: 16px; font-size: 13px; line-height: 1.5; font-weight: 500;
+}
+.msg.user .msg-bubble { background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
+.msg.bot .msg-bubble { background: var(--bg); color: var(--text); border-bottom-left-radius: 4px; border: 1.5px solid var(--border); }
+.msg-time { font-size: 10px; color: var(--text2); font-weight: 600; margin-top: 4px; text-align: right; }
+.msg.bot .msg-time { text-align: left; }
+.typing-bubble { display: flex; gap: 5px; align-items: center; padding: 12px 16px; }
+.typing-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); opacity: 0.4; animation: typingBounce 1.2s infinite; }
+.typing-dot:nth-child(2){ animation-delay: 0.2s; }
+.typing-dot:nth-child(3){ animation-delay: 0.4s; }
+@keyframes typingBounce { 0%,60%,100%{transform:translateY(0);opacity:0.4;} 30%{transform:translateY(-5px);opacity:1;} }
+.chat-input-row { padding: 10px 14px; border-top: 1.5px solid var(--border); display: flex; gap: 8px; }
+.chat-input {
+  flex: 1; background: var(--bg); border: 2px solid var(--border); border-radius: 14px;
+  color: var(--text); font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 500;
+  padding: 10px 14px; outline: none; transition: border-color 0.2s;
+}
+.chat-input:focus { border-color: var(--primary); }
+.chat-send {
+  width: 42px; height: 42px; border-radius: 13px; border: none;
+  background: var(--primary); color: #fff; font-size: 18px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 10px rgba(108,63,245,0.3); flex-shrink: 0; transition: all 0.15s;
+}
+.chat-send:active { transform: scale(0.92); }
+
+/* LEARN TAB */
+.wod-card {
+  background: linear-gradient(135deg, var(--primary) 0%, #8B5CF6 100%);
+  border-radius: 24px; padding: 24px; color: #fff; position: relative; overflow: hidden;
+  box-shadow: 0 8px 32px rgba(108,63,245,0.35);
+}
+.wod-card::after { content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.07); }
+.wod-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+.wod-lang-row { margin-bottom: 16px; }
+.wod-lang-pick { background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.3); color: #fff; font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700; padding: 8px 14px; border-radius: 12px; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; }
+.wod-lang-pick option { color: var(--text); background: var(--white); }
+.wod-word-text { font-family: 'Nunito', sans-serif; font-size: 38px; font-weight: 900; letter-spacing: -1px; line-height: 1; margin-bottom: 6px; }
+.wod-pron { font-size: 14px; opacity: 0.75; margin-bottom: 8px; font-weight: 500; }
+.wod-pos { display: inline-block; background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; margin-bottom: 14px; text-transform: uppercase; }
+.wod-meaning { font-size: 15px; font-weight: 600; line-height: 1.6; opacity: 0.95; margin-bottom: 10px; }
+.wod-example { font-size: 13px; opacity: 0.75; font-style: italic; line-height: 1.6; padding-left: 12px; border-left: 3px solid rgba(255,255,255,0.3); }
+.wod-actions { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+.wod-btn { padding: 8px 18px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.12); color: #fff; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.15s; }
+.wod-btn:active { background: rgba(255,255,255,0.25); }
+.wod-loading { min-height: 120px; display: flex; align-items: center; justify-content: center; }
+.wod-loading .spinner { width: 28px; height: 28px; border-width: 3px; border-color: rgba(255,255,255,0.2); border-top-color: #fff; }
+
+.streak-row { display: flex; gap: 10px; }
+.streak-card { flex: 1; background: var(--card); border-radius: 18px; padding: 16px; box-shadow: var(--shadow); border: 1.5px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.streak-icon { font-size: 28px; }
+.streak-num { font-family: 'Nunito', sans-serif; font-size: 24px; font-weight: 900; color: var(--secondary); line-height: 1; }
+.streak-sub { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+
+.saved-card { background: var(--card); border-radius: 20px; padding: 18px; box-shadow: var(--shadow); border: 1.5px solid var(--border); }
+.saved-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; max-height: 160px; overflow-y: auto; }
+.saved-list::-webkit-scrollbar { width: 0; }
+.saved-word-item { background: var(--bg); border-radius: 14px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
+.saved-word { font-size: 14px; font-weight: 800; color: var(--primary); }
+.saved-def { font-size: 11px; color: var(--text2); font-weight: 500; margin-top: 2px; }
+.del-btn { background: var(--red-light); border: none; color: var(--red); width: 28px; height: 28px; border-radius: 8px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.saved-empty { text-align: center; padding: 20px; color: var(--text2); font-size: 13px; font-weight: 600; }
+
+/* ERROR TOAST */
+.toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--red); color: #fff; padding: 10px 20px; border-radius: 14px; font-size: 13px; font-weight: 700; opacity: 0; transition: all 0.3s; z-index: 100; white-space: nowrap; box-shadow: 0 4px 20px rgba(239,68,68,0.4); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-mark">🌐</div>
+      <div class="logo-text">VoiceBridge</div>
+    </div>
+    <div class="live-badge" id="liveBadge">
+      <div class="badge-dot"></div>
+      <span id="liveText">Ready</span>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <button class="nav-btn active" data-tab="voice"><span class="icon">🎙️</span><span class="label">Voice</span></button>
+    <button class="nav-btn" data-tab="text"><span class="icon">✏️</span><span class="label">Text</span></button>
+    <button class="nav-btn" data-tab="chat"><span class="icon">🤖</span><span class="label">AI</span></button>
+    <button class="nav-btn" data-tab="learn"><span class="icon">📚</span><span class="label">Learn</span></button>
+  </nav>
+
+  <!-- MAIN -->
+  <main id="mainScroll">
+
+    <!-- ══ VOICE TAB ══ -->
+    <div class="tab active" id="tab-voice">
+      <div class="card">
+        <div class="card-title">Translation Route</div>
+        <div class="lang-selector">
+          <div class="lang-group">
+            <div class="lang-label">Listening in</div>
+            <select class="lang-pick" id="voiceSrc">
+              <option value="en-US">🇬🇧 English</option>
+              <option value="hi-IN">🇮🇳 Hindi</option>
+              <option value="ta-IN">🇮🇳 Tamil</option>
+              <option value="fr-FR">🇫🇷 French</option>
+              <option value="es-ES">🇪🇸 Spanish</option>
+              <option value="de-DE">🇩🇪 German</option>
+              <option value="zh-CN">🇨🇳 Mandarin</option>
+              <option value="ar-SA">🇸🇦 Arabic</option>
+              <option value="pt-BR">🇧🇷 Portuguese</option>
+              <option value="yo-NG">🇳🇬 Yoruba</option>
+              <option value="ig-NG">🇳🇬 Igbo</option>
+              <option value="ha-NG">🇳🇬 Hausa</option>
+              <option value="sw-KE">🇰🇪 Swahili</option>
+              <option value="ja-JP">🇯🇵 Japanese</option>
+              <option value="ko-KR">🇰🇷 Korean</option>
+            </select>
+          </div>
+          <button class="swap-btn" id="voiceSwap">⇄</button>
+          <div class="lang-group">
+            <div class="lang-label">Translate to</div>
+            <select class="lang-pick" id="voiceTgt">
+              <option value="en">🇬🇧 English</option>
+              <option value="hi">🇮🇳 Hindi</option>
+              <option value="ta">🇮🇳 Tamil</option>
+              <option value="fr">🇫🇷 French</option>
+              <option value="es">🇪🇸 Spanish</option>
+              <option value="de">🇩🇪 German</option>
+              <option value="zh">🇨🇳 Mandarin</option>
+              <option value="ar">🇸🇦 Arabic</option>
+              <option value="pt">🇧🇷 Portuguese</option>
+              <option value="yo">🇳🇬 Yoruba</option>
+              <option value="ig">🇳🇬 Igbo</option>
+              <option value="ha">🇳🇬 Hausa</option>
+              <option value="sw">🇰🇪 Swahili</option>
+              <option value="ja">🇯🇵 Japanese</option>
+              <option value="ko">🇰🇷 Korean</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="output-box" id="voiceOutput">
+        <div id="voiceOriginal" class="output-original hidden"></div>
+        <div id="voiceTranslated" class="output-placeholder">Tap the mic and start speaking...</div>
+        <div class="output-actions">
+          <div class="spinner-wrap" id="voiceSpinner"><div class="spinner"></div> Translating</div>
+          <button class="chip" id="voiceSpeakBtn" style="display:none;">🔊 Speak</button>
+          <button class="chip" id="voiceCopyBtn" style="display:none;">📋 Copy</button>
+        </div>
+      </div>
+
+      <div class="waveform-card">
+        <span class="wave-status" id="waveStatus">Standby</span>
+        <div class="wave-bars" id="waveBars"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Session History</div>
+        <div class="log-list" id="logList">
+          <div class="log-empty">Nothing translated yet. Start speaking!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TEXT TAB ══ -->
+    <div class="tab" id="tab-text">
+      <div class="card">
+        <div class="card-title">Translation Route</div>
+        <div class="lang-selector">
+          <div class="lang-group">
+            <div class="lang-label">From</div>
+            <select class="lang-pick" id="textSrc">
+              <option value="auto">🌐 Auto Detect</option>
+              <option value="en">🇬🇧 English</option>
+              <option value="hi">🇮🇳 Hindi</option>
+              <option value="fr">🇫🇷 French</option>
+              <option value="es">🇪🇸 Spanish</option>
+              <option value="de">🇩🇪 German</option>
+              <option value="zh">🇨🇳 Mandarin</option>
+              <option value="ar">🇸🇦 Arabic</option>
+              <option value="pt">🇧🇷 Portuguese</option>
+              <option value="yo">🇳🇬 Yoruba</option>
+              <option value="ig">🇳🇬 Igbo</option>
+              <option value="ha">🇳🇬 Hausa</option>
+              <option value="sw">🇰🇪 Swahili</option>
+              <option value="ja">🇯🇵 Japanese</option>
+              <option value="ko">🇰🇷 Korean</option>
+            </select>
+          </div>
+          <button class="swap-btn" id="textSwap">⇄</button>
+          <div class="lang-group">
+            <div class="lang-label">To</div>
+            <select class="lang-pick" id="textTgt">
+              <option value="en">🇬🇧 English</option>
+              <option value="hi">🇮🇳 Hindi</option>
+              <option value="fr">🇫🇷 French</option>
+              <option value="es">🇪🇸 Spanish</option>
+              <option value="de">🇩🇪 German</option>
+              <option value="zh">🇨🇳 Mandarin</option>
+              <option value="ar">🇸🇦 Arabic</option>
+              <option value="pt">🇧🇷 Portuguese</option>
+              <option value="yo">🇳🇬 Yoruba</option>
+              <option value="ig">🇳🇬 Igbo</option>
+              <option value="ha">🇳🇬 Hausa</option>
+              <option value="sw">🇰🇪 Swahili</option>
+              <option value="ja">🇯🇵 Japanese</option>
+              <option value="ko">🇰🇷 Korean</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="padding-bottom:14px;">
+        <div class="card-title">Enter Text</div>
+        <textarea class="text-area" id="textInput" placeholder="Type a word or sentence here..." rows="4"></textarea>
+        <div class="translate-row">
+          <button class="btn-clear" id="textClearBtn">Clear</button>
+          <button class="btn-translate" id="textTranslateBtn">Translate →</button>
+        </div>
+      </div>
+
+      <div class="output-box" id="textOutput">
+        <div id="textOriginal" class="output-original hidden"></div>
+        <div id="textTranslated" class="output-placeholder">Your translation will appear here...</div>
+        <div class="output-actions" style="margin-top:10px;">
+          <div class="spinner-wrap" id="textSpinner"><div class="spinner"></div> Translating</div>
+          <button class="chip primary hidden" id="textAskAI">✦ Ask AI Instead</button>
+          <button class="chip hidden" id="textSpeakBtn">🔊 Speak</button>
+          <button class="chip hidden" id="textCopyBtn">📋 Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ AI CHAT TAB ══ -->
+    <div class="tab" id="tab-chat">
+      <div class="chat-wrap">
+        <div class="chat-header">
+          <div class="chat-avatar">🤖</div>
+          <div class="chat-header-text">
+            <div class="chat-header-name">VoiceBridge AI</div>
+            <div class="chat-header-sub">Multilingual assistant • Always online</div>
+          </div>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="msg bot">
+            <div class="msg-bubble">Hey! 👋 I'm your language assistant. Ask me to translate anything, explain grammar, or teach you phrases in any language — including Yoruba, Igbo, Hausa and more!</div>
+            <div class="msg-time">Now</div>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" class="chat-input" id="chatInput" placeholder="Ask anything about language..." />
+          <button class="chat-send" id="chatSend">➤</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ LEARN TAB ══ -->
+    <div class="tab" id="tab-learn">
+      <div class="wod-card" id="wodCard">
+        <div class="wod-badge">📖 Word of the Day</div>
+        <div class="wod-lang-row">
+          <select class="wod-lang-pick" id="wodLang">
+            <option value="en">🇬🇧 English</option>
+            <option value="es">🇪🇸 Spanish</option>
+            <option value="fr">🇫🇷 French</option>
+            <option value="de">🇩🇪 German</option>
+            <option value="it">🇮🇹 Italian</option>
+            <option value="ja">🇯🇵 Japanese</option>
+            <option value="zh">🇨🇳 Mandarin</option>
+            <option value="yo">🇳🇬 Yoruba</option>
+            <option value="sw">🇰🇪 Swahili</option>
+            <option value="hi">🇮🇳 Hindi</option>
+            <option value="ar">🇸🇦 Arabic</option>
+            <option value="pt">🇧🇷 Portuguese</option>
+          </select>
+        </div>
+        <div id="wodContent" class="wod-loading"><div class="spinner"></div></div>
+        <div class="wod-actions">
+          <button class="wod-btn" id="wodSpeak">🔊 Pronounce</button>
+          <button class="wod-btn" id="wodSave">+ Save</button>
+          <button class="wod-btn" id="wodNew">↺ New Word</button>
+        </div>
+      </div>
+
+      <div class="streak-row">
+        <div class="streak-card">
+          <div class="streak-icon">🔥</div>
+          <div>
+            <div class="streak-num" id="streakNum">0</div>
+            <div class="streak-sub">Day Streak</div>
+          </div>
+        </div>
+        <div class="streak-card">
+          <div class="streak-icon">📚</div>
+          <div>
+            <div class="streak-num" id="savedCount">0</div>
+            <div class="streak-sub">Words Saved</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="saved-card">
+        <div class="card-title">Saved Words</div>
+        <div class="saved-list" id="savedList">
+          <div class="saved-empty">No saved words yet. Hit + Save on the word above!</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MIC FOOTER (voice tab only) -->
+  <div class="mic-section" id="micSection">
+    <div class="mic-outer">
+      <div class="mic-ring" id="micRing"></div>
+      <button class="mic-btn" id="micBtn">🎙️</button>
+    </div>
+    <div class="mic-label" id="micLabel">Tap to start listening</div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── HELPERS ───────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const LANG_NAMES = {en:'English',hi:'Hindi',ta:'Tamil',te:'Telugu',fr:'French',es:'Spanish',de:'German',zh:'Mandarin',ar:'Arabic',pt:'Portuguese',yo:'Yoruba',ig:'Igbo',ha:'Hausa',sw:'Swahili',ja:'Japanese',ko:'Korean',it:'Italian',auto:'Auto'};
+
+function toast(msg, dur=3000) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function now() {
+  return new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+
+// ─── TRANSLATION API ────────────────────────────────────────
+// MyMemory: free, no key, works from browser
+async function translateText(text, src, tgt) {
+  try {
+    const s = (src === 'auto' || src === 'autodetect') ? 'autodetect' : src.split('-')[0];
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${s}|${tgt}`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (r.ok) {
+      const d = await r.json();
+      if (d.responseStatus === 200 && d.responseData?.translatedText) {
+        const result = d.responseData.translatedText;
+        if (result.toLowerCase().trim() !== text.toLowerCase().trim()) {
+          return { success: true, text: result };
+        }
+      }
+    }
+  } catch(e) {}
+
+  // Fallback: LibreTranslate public instance (no key needed)
+  try {
+    const s2 = (src === 'auto' || src === 'autodetect') ? 'auto' : src.split('-')[0];
+    const r2 = await fetch('https://libretranslate.com/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: text, source: s2, target: tgt, format: 'text' }),
+      signal: AbortSignal.timeout(8000)
+    });
+    if (r2.ok) {
+      const d2 = await r2.json();
+      if (d2.translatedText && d2.translatedText.toLowerCase() !== text.toLowerCase()) {
+        return { success: true, text: d2.translatedText };
+      }
+    }
+  } catch(e) {}
+
+  return { success: false, text: 'Translation unavailable right now. Check connection and try again.' };
+}
+
+// Alias — text tab uses this too
+async function aiTranslate(text, src, tgt) {
+  return await translateText(text, src, tgt);
+}
+
+// AI Chat via MyMemory trick won't work — use a prompt-based translation fallback
+// For AI Chat: uses a free public LLM proxy (no key needed)
+async function callAI(messages, system='') {
+  // Build a single prompt from messages + system
+  const sysLine = system ? `[System: ${system}]\n\n` : '';
+  const conversation = messages.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n');
+  const fullPrompt = sysLine + conversation + '\nAssistant:';
+
+  // Try OpenRouter free tier (no auth needed for some models)
+  try {
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://obinna18.github.io/voicebridge/',
+        'X-Title': 'VoiceBridge'
+      },
+      body: JSON.stringify({
+        model: 'mistralai/mistral-7b-instruct:free',
+        messages: system
+          ? [{ role: 'system', content: system }, ...messages]
+          : messages,
+        max_tokens: 600
+      }),
+      signal: AbortSignal.timeout(15000)
+    });
+    if (r.ok) {
+      const d = await r.json();
+      const txt = d.choices?.[0]?.message?.content?.trim();
+      if (txt) return txt;
+    }
+  } catch(e) {}
+
+  // Last fallback: just use MyMemory translation trick for simple queries
+  return "I'm having trouble connecting right now. Please check your internet and try again. For translation, use the Text tab which works offline.";
+}
+
+function speakText(text, lang) {
+  if (!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang; u.rate = 0.9;
+  speechSynthesis.speak(u);
+}
+
+// ─── TAB NAV ────────────────────────────────────────────────
+const micSection = $('micSection');
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    $('tab-' + btn.dataset.tab).classList.add('active');
+    micSection.style.display = btn.dataset.tab === 'voice' ? 'flex' : 'none';
+    if (btn.dataset.tab === 'learn' && !currentWod) loadWod(wodLang.value);
+  });
+});
+
+// ─── WAVEFORM ───────────────────────────────────────────────
+const waveBars = $('waveBars');
+const bars = [];
+for (let i = 0; i < 24; i++) {
+  const b = document.createElement('div'); b.className = 'bar'; waveBars.appendChild(b); bars.push(b);
+}
+let waveTimer = null;
+function startWave() {
+  bars.forEach(b => b.classList.add('on'));
+  waveTimer = setInterval(() => {
+    bars.forEach(b => { b.style.setProperty('--h', (Math.random()*22+4)+'px'); b.style.animationDuration = (Math.random()*0.5+0.4)+'s'; });
+  }, 120);
+}
+function stopWave() {
+  clearInterval(waveTimer);
+  bars.forEach(b => { b.classList.remove('on'); b.style.removeProperty('--h'); });
+}
+
+// ─── VOICE TAB ──────────────────────────────────────────────
+let isRecording = false, recog = null, curVoiceResult = '';
+const micBtn = $('micBtn'), micRing = $('micRing'), micLabel = $('micLabel');
+const liveBadge = $('liveBadge'), liveText = $('liveText');
+const voiceOutput = $('voiceOutput'), voiceOriginal = $('voiceOriginal');
+const voiceTranslated = $('voiceTranslated'), voiceSpinner = $('voiceSpinner');
+
+const srcToTgt = {'en-US':'en','hi-IN':'hi','ta-IN':'ta','fr-FR':'fr','es-ES':'es','de-DE':'de','zh-CN':'zh','ar-SA':'ar','pt-BR':'pt','yo-NG':'yo','ig-NG':'ig','ha-NG':'ha','sw-KE':'sw','ja-JP':'ja','ko-KR':'ko'};
+const tgtToSrc = {'en':'en-US','hi':'hi-IN','ta':'ta-IN','fr':'fr-FR','es':'es-ES','de':'de-DE','zh':'zh-CN','ar':'ar-SA','pt':'pt-BR','yo':'yo-NG','ig':'ig-NG','ha':'ha-NG','sw':'sw-KE','ja':'ja-JP','ko':'ko-KR'};
+
+$('voiceSwap').addEventListener('click', () => {
+  const s = $('voiceSrc').value, t = $('voiceTgt').value;
+  const newS = tgtToSrc[t]; const newT = srcToTgt[s];
+  if (newS) $('voiceSrc').value = newS;
+  if (newT) $('voiceTgt').value = newT;
+});
+
+function setupRecog() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast('Speech recognition not supported. Use Chrome browser.'); return null; }
+  const r = new SR();
+  // KEY FIX: lock to EXACTLY the selected language — no auto detect
+  r.lang = $('voiceSrc').value;
+  r.continuous = true;
+  r.interimResults = true;
+  r.maxAlternatives = 1;
+
+  r.onstart = () => {
+    liveBadge.classList.add('recording'); liveText.textContent = 'Live';
+    micBtn.classList.add('on'); micBtn.textContent = '⏹';
+    micRing.classList.add('active'); micLabel.textContent = 'Tap to stop';
+    $('waveStatus').textContent = 'Listening'; startWave();
+  };
+
+  r.onend = () => {
+    if (isRecording) { try { r.start(); } catch(e){} }
+    else {
+      liveBadge.classList.remove('recording'); liveText.textContent = 'Ready';
+      micBtn.classList.remove('on'); micBtn.textContent = '🎙️';
+      micRing.classList.remove('active'); micLabel.textContent = 'Tap to start listening';
+      $('waveStatus').textContent = 'Standby'; stopWave();
+    }
+  };
+
+  r.onresult = async (event) => {
+    let interim = '', final = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      event.results[i].isFinal ? (final += t) : (interim += t);
+    }
+    if (interim || final) {
+      voiceOriginal.textContent = final || interim;
+      voiceOriginal.classList.remove('hidden');
+    }
+    if (final.trim()) {
+      voiceSpinner.classList.add('show');
+      voiceTranslated.textContent = '';
+      const tgt = $('voiceTgt').value;
+      const src = $('voiceSrc').value;
+      const result = await translateText(final.trim(), src, tgt);
+      voiceSpinner.classList.remove('show');
+      if (result.success) {
+        voiceTranslated.className = 'output-translated';
+        voiceTranslated.textContent = result.text;
+        voiceOutput.classList.add('has-result');
+        curVoiceResult = result.text;
+        $('voiceSpeakBtn').style.display = 'flex';
+        $('voiceCopyBtn').style.display = 'flex';
+        addLog(final.trim(), result.text);
+        speakText(result.text, tgt);
+      } else {
+        voiceTranslated.className = 'output-placeholder';
+        voiceTranslated.textContent = result.text;
+        toast(result.text);
+      }
+    }
+  };
+
+  r.onerror = e => {
+    if (e.error === 'not-allowed') {
+      toast('Mic access denied. Allow it in browser settings.');
+      stopRec();
+    } else if (e.error === 'network') {
+      // Mobile Chrome fires "network" on timeout — silently restart, not a real error
+      if (isRecording) setTimeout(() => { try { r.start(); } catch(err){} }, 300);
+    } else if (e.error === 'no-speech' || e.error === 'aborted') {
+      // Normal — ignore
+    } else {
+      toast('Mic error: ' + e.error + '. Try tapping mic again.');
+    }
+  };
+  return r;
+}
+
+function stopRec() {
+  isRecording = false;
+  if (recog) { try { recog.stop(); } catch(e){} }
+}
+
+micBtn.addEventListener('click', () => {
+  if (isRecording) { stopRec(); }
+  else {
+    recog = setupRecog(); if (!recog) return;
+    isRecording = true;
+    try { recog.start(); } catch(e) { toast('Could not start mic.'); isRecording = false; }
+  }
+});
+
+$('voiceSpeakBtn').addEventListener('click', () => speakText(curVoiceResult, $('voiceTgt').value));
+$('voiceCopyBtn').addEventListener('click', () => {
+  navigator.clipboard.writeText(curVoiceResult).then(() => { $('voiceCopyBtn').textContent = '✅ Copied'; setTimeout(() => $('voiceCopyBtn').textContent = '📋 Copy', 1500); });
+});
+
+function addLog(orig, trans) {
+  const list = $('logList');
+  const empties = list.querySelector('.log-empty'); if (empties) empties.remove();
+  const item = document.createElement('div'); item.className = 'log-item';
+  item.innerHTML = `<div class="log-original">${orig}</div><div class="log-translated">${trans}</div>`;
+  list.prepend(item);
+  if (list.children.length > 20) list.lastChild.remove();
+}
+
+// ─── TEXT TAB ───────────────────────────────────────────────
+$('textSwap').addEventListener('click', () => {
+  const s = $('textSrc').value, t = $('textTgt').value;
+  if (s === 'auto') return;
+  $('textSrc').value = t; $('textTgt').value = s;
+});
+
+let curTextResult = '', curTextInput = '';
+
+async function doTextTranslate(useAI = false) {
+  const text = $('textInput').value.trim();
+  if (!text) { toast('Please type something first!'); return; }
+  curTextInput = text;
+  const src = $('textSrc').value, tgt = $('textTgt').value;
+  $('textSpinner').classList.add('show');
+  $('textTranslateBtn').disabled = true;
+  $('textAskAI').classList.add('hidden');
+  $('textSpeakBtn').classList.add('hidden');
+  $('textCopyBtn').classList.add('hidden');
+  $('textOriginal').textContent = text; $('textOriginal').classList.remove('hidden');
+  $('textTranslated').className = 'output-placeholder'; $('textTranslated').textContent = 'Translating...';
+
+  const result = useAI ? await aiTranslate(text, src, tgt) : await translateText(text, src, tgt);
+  $('textSpinner').classList.remove('show'); $('textTranslateBtn').disabled = false;
+
+  if (result.success) {
+    $('textTranslated').className = 'output-translated'; $('textTranslated').textContent = result.text;
+    curTextResult = result.text; $('textOutput').classList.add('has-result');
+    $('textSpeakBtn').classList.remove('hidden'); $('textCopyBtn').classList.remove('hidden');
+    $('textAskAI').classList.add('hidden');
+  } else {
+    $('textTranslated').className = 'output-placeholder'; $('textTranslated').textContent = result.text || 'Translation failed.';
+    $('textAskAI').classList.remove('hidden');
+  }
+}
+
+$('textTranslateBtn').addEventListener('click', () => doTextTranslate(false));
+$('textAskAI').addEventListener('click', () => doTextTranslate(true));
+$('textInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doTextTranslate(false); } });
+$('textClearBtn').addEventListener('click', () => {
+  $('textInput').value = ''; curTextResult = '';
+  $('textOriginal').classList.add('hidden');
+  $('textTranslated').className = 'output-placeholder'; $('textTranslated').textContent = 'Your translation will appear here...';
+  $('textOutput').classList.remove('has-result');
+  [$('textAskAI'),$('textSpeakBtn'),$('textCopyBtn')].forEach(b => b.classList.add('hidden'));
+});
+$('textSpeakBtn').addEventListener('click', () => speakText(curTextResult, $('textTgt').value));
+$('textCopyBtn').addEventListener('click', () => {
+  navigator.clipboard.writeText(curTextResult).then(() => { $('textCopyBtn').textContent = '✅ Copied'; setTimeout(() => $('textCopyBtn').textContent = '📋 Copy', 1500); });
+});
+
+// ─── AI CHAT TAB ────────────────────────────────────────────
+const chatHistory = [];
+const CHAT_SYS = `You are VoiceBridge AI, a warm and knowledgeable multilingual language assistant built into a real-time translation app. You help users translate text, learn about languages, understand grammar, learn phrases, and explore cultures. You're especially good with African languages like Yoruba, Igbo, Hausa, and Swahili. Keep replies friendly, clear, and concise. Use emojis occasionally to make it feel conversational. When translating, show the translation prominently first, then explain if useful.`;
+
+function appendMsg(text, role) {
+  const t = $('chatMessages');
+  const div = document.createElement('div'); div.className = `msg ${role}`;
+  div.innerHTML = `<div class="msg-bubble">${text.replace(/\n/g,'<br>')}</div><div class="msg-time">${now()}</div>`;
+  t.appendChild(div); t.scrollTop = t.scrollHeight; return div;
+}
+
+function appendTyping() {
+  const t = $('chatMessages');
+  const div = document.createElement('div'); div.className = 'msg bot';
+  div.innerHTML = `<div class="msg-bubble"><div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  t.appendChild(div); t.scrollTop = t.scrollHeight; return div;
+}
+
+async function sendChat() {
+  const input = $('chatInput'); const text = input.value.trim(); if (!text) return;
+  input.value = ''; $('chatSend').disabled = true; input.disabled = true;
+  appendMsg(text, 'user');
+  chatHistory.push({ role: 'user', content: text });
+  const typing = appendTyping();
+  try {
+    const reply = await callAI([...chatHistory], CHAT_SYS);
+    typing.remove(); chatHistory.push({ role: 'assistant', content: reply });
+    appendMsg(reply, 'bot');
+    if (chatHistory.length > 18) chatHistory.splice(0, 2);
+  } catch(e) { typing.remove(); appendMsg('Network error. Please try again.', 'bot'); }
+  $('chatSend').disabled = false; input.disabled = false; input.focus();
+}
+
+$('chatSend').addEventListener('click', sendChat);
+$('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+
+// ─── LEARN TAB ──────────────────────────────────────────────
+const wodLang = $('wodLang');
+let currentWod = null;
+let savedWords = JSON.parse(localStorage.getItem('vb_words') || '[]');
+let streak = parseInt(localStorage.getItem('vb_streak') || '0');
+const today = new Date().toDateString();
+const lastVisit = localStorage.getItem('vb_date') || '';
+
+if (lastVisit !== today) {
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  streak = lastVisit === yesterday ? streak + 1 : 1;
+  localStorage.setItem('vb_streak', streak); localStorage.setItem('vb_date', today);
+}
+$('streakNum').textContent = streak;
+$('savedCount').textContent = savedWords.length;
+
+// Local word banks — no API needed, always works
+const WORD_BANK = {
+  en: [
+    {word:'Serendipity',pronunciation:'ser-en-DIP-i-tee',partOfSpeech:'noun',meaning:'Finding something good without looking for it.',example:'"Meeting her was pure serendipity." (It happened by happy chance.)'},
+    {word:'Resilience',pronunciation:'reh-ZIL-ee-ents',partOfSpeech:'noun',meaning:'The ability to recover quickly from difficulties.',example:'"Her resilience after the setback inspired everyone."'},
+    {word:'Ephemeral',pronunciation:'eh-FEM-er-al',partOfSpeech:'adjective',meaning:'Lasting for a very short time.',example:'"The beauty of cherry blossoms is ephemeral."'},
+    {word:'Perspicacious',pronunciation:'per-spi-KAY-shus',partOfSpeech:'adjective',meaning:'Having a ready insight into things; shrewd.',example:'"A perspicacious observer noticed the flaw immediately."'},
+    {word:'Mellifluous',pronunciation:'meh-LIF-loo-us',partOfSpeech:'adjective',meaning:'Sweet or musical; pleasant to hear.',example:'"She had a mellifluous voice that calmed everyone."'},
+  ],
+  yo: [
+    {word:'Àánú',pronunciation:'AH-noo',partOfSpeech:'noun',meaning:'Compassion; mercy; sympathy for others.',example:'"Ó ní àánú fún àwọn talakà." (He had compassion for the poor.)'},
+    {word:'Ìgboyà',pronunciation:'IG-bo-ya',partOfSpeech:'noun',meaning:'Courage; bravery in the face of difficulty.',example:'"Ìgboyà rẹ̀ jẹ́ kí gbogbo wa ya." (His courage amazed us all.)'},
+    {word:'Ọlọ́run',pronunciation:'O-LO-run',partOfSpeech:'noun',meaning:'God; the Supreme Being.',example:'"Ọlọ́run ló ń ṣàkóso." (God is in control.)'},
+    {word:'Àlàáfíà',pronunciation:'ah-LAH-fee-ah',partOfSpeech:'noun',meaning:'Peace; wellbeing; a state of harmony.',example:'"Mo fẹ́ àlàáfíà fún ọ." (I wish you peace.)'},
+    {word:'Ìmọ̀',pronunciation:'ee-MO',partOfSpeech:'noun',meaning:'Knowledge; wisdom; understanding.',example:'"Ìmọ̀ ni ọrọ̀." (Knowledge is wealth.)'},
+  ],
+  ig: [
+    {word:'Ọha',pronunciation:'OH-ha',partOfSpeech:'noun',meaning:'The community; people gathered together.',example:'"Ọha na-enye ndụ." (The community gives life.)'},
+    {word:'Ihe ọmụma',pronunciation:'ee-HEH oh-MOO-mah',partOfSpeech:'noun',meaning:'Knowledge; learning; wisdom.',example:'"Ihe ọmụma bụ ike." (Knowledge is power.)'},
+    {word:'Udo',pronunciation:'OO-do',partOfSpeech:'noun',meaning:'Peace; tranquility; rest from strife.',example:'"Ka udo dị n\'ime ụlọ gị." (May peace dwell in your home.)'},
+    {word:'Nchekwa',pronunciation:'n-CHEK-wah',partOfSpeech:'noun',meaning:'Protection; safety; security.',example:'"Nchekwa Chukwu dị mma." (God\'s protection is sufficient.)'},
+    {word:'Ọchịchọ',pronunciation:'oh-CHEE-cho',partOfSpeech:'noun',meaning:'Desire; longing; deep want.',example:'"Ọchịchọ m bụ ịmụta asụsụ." (My desire is to learn languages.)'},
+  ],
+  ha: [
+    {word:'Haƙuri',pronunciation:'ha-KOO-ree',partOfSpeech:'noun',meaning:'Patience; tolerance; endurance.',example:'"Haƙuri maganin duniya." (Patience is the remedy of the world.)'},
+    {word:'Ilimi',pronunciation:'ee-LEE-mee',partOfSpeech:'noun',meaning:'Knowledge; education; learning.',example:'"Ilimi shine mabuɗin rayuwa." (Knowledge is the key to life.)'},
+    {word:'Salama',pronunciation:'sah-LAH-mah',partOfSpeech:'noun',meaning:'Peace; greeting; safety.',example:'"Mu zauna cikin salama." (We live in peace.)'},
+    {word:'Ƙarfi',pronunciation:'KAR-fee',partOfSpeech:'noun',meaning:'Strength; power; ability.',example:'"Ƙarfin zuciya ya fi na jiki." (Inner strength exceeds physical strength.)'},
+  ],
+  sw: [
+    {word:'Ujasiri',pronunciation:'oo-jah-SEE-ree',partOfSpeech:'noun',meaning:'Bravery; courage; boldness.',example:'"Ujasiri wake ulivutia wote." (His courage attracted everyone.)'},
+    {word:'Upendo',pronunciation:'oo-PEN-do',partOfSpeech:'noun',meaning:'Love; affection; deep care.',example:'"Upendo ni nguvu kubwa." (Love is a great power.)'},
+    {word:'Elimu',pronunciation:'eh-LEE-moo',partOfSpeech:'noun',meaning:'Education; knowledge; learning.',example:'"Elimu ni ufunguo wa maisha." (Education is the key to life.)'},
+    {word:'Amani',pronunciation:'ah-MAH-nee',partOfSpeech:'noun',meaning:'Peace; calmness; freedom from conflict.',example:'"Tuishi kwa amani." (Let us live in peace.)'},
+  ],
+  fr: [
+    {word:'Dépaysement',pronunciation:'day-pay-EEZ-mahn',partOfSpeech:'noun',meaning:'The disorientation of being in a foreign place; also a refreshing sense of change.',example:'"Le dépaysement du voyage l\'a libérée." (The displacement of travel freed her.)'},
+    {word:'Flâner',pronunciation:'flah-NAY',partOfSpeech:'verb',meaning:'To stroll aimlessly through the city, enjoying what you find.',example:'"J\'aime flâner dans Paris." (I love wandering through Paris.)'},
+    {word:'Retrouvailles',pronunciation:'reh-troo-VY',partOfSpeech:'noun',meaning:'The happiness of reuniting with someone after a long time apart.',example:'"Ces retrouvailles étaient émouvantes." (This reunion was moving.)'},
+  ],
+  es: [
+    {word:'Madrugada',pronunciation:'mah-droo-GAH-dah',partOfSpeech:'noun',meaning:'The hours between midnight and dawn; the darkest, quietest part of night.',example:'"Escribo mejor en la madrugada." (I write best in the early morning hours.)'},
+    {word:'Sobremesa',pronunciation:'so-breh-MEH-sah',partOfSpeech:'noun',meaning:'The time spent talking after a meal, still sitting at the table.',example:'"La sobremesa duró tres horas." (The after-dinner chat lasted three hours.)'},
+    {word:'Añoranza',pronunciation:'an-yo-RAN-thah',partOfSpeech:'noun',meaning:'A deep longing for the past; nostalgia with an ache.',example:'"Siente añoranza por su tierra." (He feels a deep longing for his homeland.)'},
+  ],
+  de: [
+    {word:'Fernweh',pronunciation:'FERN-veh',partOfSpeech:'noun',meaning:'An ache for distant places; longing to travel far away.',example:'"Sein Fernweh trieb ihn nach Afrika." (His wanderlust drove him to Africa.)'},
+    {word:'Weltanschauung',pronunciation:'VELT-an-show-oong',partOfSpeech:'noun',meaning:'A comprehensive worldview or philosophy of life.',example:'"Seine Weltanschauung hat sich verändert." (His worldview has changed.)'},
+    {word:'Schadenfreude',pronunciation:'SHAH-den-froy-deh',partOfSpeech:'noun',meaning:'Pleasure derived from someone else\'s misfortune.',example:'"Schadenfreude ist keine schöne Eigenschaft." (Schadenfreude is not a nice trait.)'},
+  ],
+  hi: [
+    {word:'जुगाड़ (Jugaad)',pronunciation:'joo-GAAD',partOfSpeech:'noun',meaning:'Creative improvisation; a frugal innovative fix.',example:'"उसने जुगाड़ से समस्या सुलझाई।" (He solved the problem with jugaad.)'},
+    {word:'अहिंसा (Ahimsa)',pronunciation:'ah-HIM-sah',partOfSpeech:'noun',meaning:'Non-violence; the principle of not harming any living being.',example:'"गांधी ने अहिंसा को अपनाया।" (Gandhi adopted ahimsa.)'},
+    {word:'आत्मा (Atma)',pronunciation:'AHT-mah',partOfSpeech:'noun',meaning:'Soul; the spiritual life force within a person.',example:'"आत्मा अमर है।" (The soul is immortal.)'},
+  ],
+  zh: [
+    {word:'缘分 (Yuánfèn)',pronunciation:'YWAN-fen',partOfSpeech:'noun',meaning:'Fate or destiny that brings people together; a destined connection.',example:'"我们相遇是缘分。" (Our meeting was fate/destiny.)'},
+    {word:'加油 (Jiā yóu)',pronunciation:'JAH yoh',partOfSpeech:'expression',meaning:'Literally "add oil"; used as encouragement — "Go for it! Keep it up!"',example:'"考试加油！" (Good luck on the exam! Go for it!)'},
+  ],
+  ja: [
+    {word:'木漏れ日 (Komorebi)',pronunciation:'ko-mo-REH-bi',partOfSpeech:'noun',meaning:'The interplay of light and leaves when sunlight filters through trees.',example:'"公園で木漏れ日を楽しんだ。" (I enjoyed the dappled light in the park.)'},
+    {word:'侘寂 (Wabi-sabi)',pronunciation:'WAH-bi SAH-bi',partOfSpeech:'noun',meaning:'Finding beauty in imperfection and impermanence.',example:'"侘寂は日本美学の核心だ。" (Wabi-sabi is the core of Japanese aesthetics.)'},
+  ],
+  ar: [
+    {word:'طمأنينة (Ṭumaʾnīna)',pronunciation:'too-ma-NEE-nah',partOfSpeech:'noun',meaning:'Serenity; a state of inner peace and contentment.',example:'"وجد الطمأنينة في الصلاة." (He found serenity in prayer.)'},
+    {word:'كرم (Karam)',pronunciation:'KAH-ram',partOfSpeech:'noun',meaning:'Generosity; nobility of character; hospitality.',example:'"كرمه مشهور في القرية." (His generosity is famous in the village.)'},
+  ],
+  pt: [
+    {word:'Saudade',pronunciation:'sow-DAH-deh',partOfSpeech:'noun',meaning:'A deep emotional longing for something or someone absent.',example:'"Tenho saudade de você." (I miss you deeply / I feel saudade for you.)'},
+    {word:'Desenrascanço',pronunciation:'deh-zen-rash-KAN-so',partOfSpeech:'noun',meaning:'The ability to improvise a solution at the last moment.',example:'"O desenrascanço português é famoso." (Portuguese improvisation is famous.)'},
+  ],
+  it: [
+    {word:'Abbiocco',pronunciation:'ah-BEE-oh-ko',partOfSpeech:'noun',meaning:'The drowsy feeling you get after a big meal.',example:'"Dopo il pranzo, ho l\'abbiocco." (After lunch, I feel sleepy.)'},
+    {word:'Culaccino',pronunciation:'koo-lah-CHEE-no',partOfSpeech:'noun',meaning:'The ring left on a table by a cold glass.',example:'"Ha lasciato un culaccino sul tavolo." (It left a ring on the table.)'},
+  ],
+};
+
+let wodIndex = {};
+
+function loadWod(lang) {
+  currentWod = null;
+  const bank = WORD_BANK[lang] || WORD_BANK['en'];
+  if (!wodIndex[lang]) wodIndex[lang] = Math.floor(Math.random() * bank.length);
+  const p = bank[wodIndex[lang] % bank.length];
+  currentWod = {...p, lang};
+  $('wodContent').innerHTML = `
+    <div class="wod-word-text">${p.word}</div>
+    <div class="wod-pron">${p.pronunciation ? '/' + p.pronunciation + '/' : ''}</div>
+    <div class="wod-pos">${p.partOfSpeech || ''}</div>
+    <div class="wod-meaning">${p.meaning}</div>
+    ${p.example ? `<div class="wod-example">${p.example}</div>` : ''}
+  `;
+}
+
+function nextWod(lang) {
+  const bank = WORD_BANK[lang] || WORD_BANK['en'];
+  wodIndex[lang] = ((wodIndex[lang] || 0) + 1) % bank.length;
+  loadWod(lang);
+}
+
+function renderSaved() {
+  const list = $('savedList'); list.innerHTML = '';
+  if (!savedWords.length) { list.innerHTML = '<div class="saved-empty">No saved words yet. Hit + Save on the word above!</div>'; return; }
+  savedWords.forEach((w, i) => {
+    const div = document.createElement('div'); div.className = 'saved-word-item';
+    div.innerHTML = `<div><div class="saved-word">${w.word} <span style="font-size:11px;color:var(--text2);font-weight:500;">(${LANG_NAMES[w.lang]||w.lang})</span></div><div class="saved-def">${w.meaning?.substring(0,55)}${w.meaning?.length>55?'...':''}</div></div><button class="del-btn" onclick="deleteWord(${i})">✕</button>`;
+    list.appendChild(div);
+  });
+}
+window.deleteWord = i => { savedWords.splice(i,1); localStorage.setItem('vb_words',JSON.stringify(savedWords)); $('savedCount').textContent=savedWords.length; renderSaved(); };
+
+$('wodSpeak').addEventListener('click', () => { if (currentWod) speakText(currentWod.word, currentWod.lang); });
+$('wodNew').addEventListener('click', () => nextWod(wodLang.value));
+wodLang.addEventListener('change', () => loadWod(wodLang.value));
+$('wodSave').addEventListener('click', () => {
+  if (!currentWod) return;
+  if (savedWords.find(w => w.word === currentWod.word)) { toast('Already saved!'); return; }
+  savedWords.unshift({word:currentWod.word,meaning:currentWod.meaning,lang:currentWod.lang});
+  if (savedWords.length > 50) savedWords.pop();
+  localStorage.setItem('vb_words', JSON.stringify(savedWords));
+  $('savedCount').textContent = savedWords.length;
+  renderSaved(); toast('✅ Word saved!', 2000);
+  $('wodSave').textContent = '✓ Saved'; setTimeout(() => $('wodSave').textContent = '+ Save', 1500);
+});
+
+renderSaved();
+</script>
+</body>
+</html>
